@@ -103,7 +103,7 @@
         for (var i=0; i*11<this.geometry.faces.length; i+=1) {
             faces = this.geometry.faces;
             for (var j=0; j<3; j++) {
-                indices.push(i+j);
+                indices.push(i*3+j);
                 textures.push(this.materials[faces[i*11+4]].id);
                 vertices.push(this.geometry.vertices[faces[i*11+1+j] * 3]);
                 vertices.push(this.geometry.vertices[faces[i*11+1+j] * 3 + 1]);
@@ -119,9 +119,6 @@
                 skinWeights.push(this.geometry.skinWeights[faces[i*11+1+j] * 2 + 1]);
             }
         }
-        
-        //console.log(model.geometry.skinIndices.length, model.geometry.vertices.length/3,
-        //        model.geometry.faces.length/11*3);
         
         this._vertexBuffer = gl.createBuffer();
         this._indexBuffer = gl.createBuffer();
@@ -266,7 +263,7 @@
         gl.enableVertexAttribArray(program.aSample);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
-        gl.drawElements(gl.LINE_STRIP, 
+        gl.drawElements(gl.TRIANGLES, 
             Math.floor(this.geometry.faces.length / 11) * 3, gl.UNSIGNED_SHORT, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -330,7 +327,7 @@
         // Начальные параметры фигуры (для модель-вид матрицы)
         model.geometry.position = [0, -0.5, -10.0];
         model.geometry.rotate = [0, 0, 0];
-        model.geometry.scale = [0.6, 0.6, 0.6];
+        model.geometry.scale = [0.3, 0.3, 0.3];
         
         return model;
 

@@ -17,11 +17,11 @@ vec4 getColor() {
 
     if (index == 0) {
         color = texture2D(uSample[0], uv);
-    } else if (index == 0) {
+    } else if (index == 1) {
         color = texture2D(uSample[1], uv);
-    } else if (index == 0) {
+    } else if (index == 2) {
         color = texture2D(uSample[2], uv);
-    } else if (index == 0) {
+    } else if (index == 3) {
         color = texture2D(uSample[3], uv);
     } else {
         color = vec4(0, 0, 0, 0);
@@ -46,7 +46,7 @@ void main() {
   vec3 v = normalize(-vec3(vec4(vVertex, 1.0)));
   vec3 r = reflect(l, n);
 
-  vec4 tColor = vec4(255,0,0,1); //getColor();
+  vec4 tColor = getColor();
 
   float lambert = dot(l, n),
         ambientInt = 0.1,
