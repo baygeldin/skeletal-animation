@@ -1,4 +1,4 @@
-uniform mat4 uP, uM;
+uniform mat4 uP, uM, uV;
 uniform mat4 uBones[32];
 
 attribute float aSample;
@@ -26,12 +26,12 @@ void main() {
 
   mat4 bt = boneTransform();
 
-  // Собственно сами вершины, которые создают полигоны
   // uP - матрица перспективного отображения
-  // uM - матрица модель-вид
+  // uM - матрица вида (из координат мира в координаты камеры)
+  // uM - матрица модели (из координат модели в мировые)
   // bt - афинное преобразование, основанное на положениях костей
 
-  gl_Position = uP * uM * bt * vec4(aVertex, 1.0);
+  gl_Position = uP * uV * uM * bt * vec4(aVertex, 1.0);
   vVertex = (bt * vec4(aVertex, 1.0)).xyz;
   vNormal = (bt * vec4(aNormal, 0.0)).xyz;
   vTexture = aTexture;

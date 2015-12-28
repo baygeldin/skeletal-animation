@@ -56,7 +56,7 @@
         return program;
 
     }(gl, ['aVertex', 'aNormal', 'aTexture', 'aSWeights', 'aSIndices', 'aSample'],
-        ['uM', 'uP', 'uN', 'uBones', 'uSample']));
+        ['uP', 'uV', 'uM', 'uN', 'uBones', 'uSample', 'uLightPos']));
 
     // Конструктор класса фигуры
     var Mesh = function(model) {
@@ -211,7 +211,7 @@
         var mvMatrix = mat4.create();
         var nMatrix = mat3.create();
 
-        // Создаем модель-вид матрицу
+        // Создаем матрицу модели
         mat4.identity(mvMatrix);
         mat4.translate(mvMatrix, mvMatrix, this.geometry.position);
         mat4.rotate(mvMatrix, mvMatrix, this.geometry.rotate[0], [1.0, 0.0, 0.0]);
@@ -270,12 +270,6 @@
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
 
-    var uP = mat4.create();
-
-    // Создать перспективную проекцию, которую будет испльзовать вместо ортографической
-    mat4.perspective(uP, 45 / 180 * Math.PI, 
-        window.innerWidth / window.innerHeight, 0.01, 500.0);
-
     // Очистить экран и залить его черным
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     // Учитывать расположение объектов по оси Z при рендеринге 
@@ -324,10 +318,10 @@
             }
         }
 
-        // Начальные параметры фигуры (для модель-вид матрицы)
-        model.geometry.position = [0, -0.5, -10.0];
+        // Начальные параметры фигуры (для матрицы модели)
+        model.geometry.position = [0, -5, 0];
         model.geometry.rotate = [0, 0, 0];
-        model.geometry.scale = [0.3, 0.3, 0.3];
+        model.geometry.scale = [1, 1, 1];
         
         return model;
 
@@ -335,35 +329,75 @@
 
     var moving = false;
 
-    // Управляем параметрами модели
-    document.addEventListener('keydown', function(event) {
-        switch(event.keyIdentifier) {
-            case 'Up':
-                mesh.geometry.rotate[0] += 0.05;
-                break;
-            case 'Down':
-                mesh.geometry.rotate[0] -= 0.05;
-                break;
-            case 'Right':
-                mesh.geometry.rotate[1] += 0.05;
-                break;
-            case 'Left':
-                mesh.geometry.rotate[1] -= 0.05;
-                break;
-            case 'U+0020':
-                moving = !moving;
-                break;
-            default: break;
-        }
-    });
+    // Интерфейс
+    (function(){
+        var capture = false, lastX, lastY;
+
+        // Упраление матрицей вида с помощью мышки
+        document.addEventListener('mousedown', function (event) {
+            if (event.which === 1)
+                capture = true;
+            lastX = event.pageX;
+            lastY = event.pageY;
+        });
+
+        document.addEventListener('mousemove', function (event) {
+            if (capture) {
+                var deltaX = event.pageX - lastX;
+                var deltaY = event.pageY - lastY;
+
+                lastX = event.pageX;
+                lastY = event.pageY;
+                orbitX += deltaY * 0.005;
+                orbitY += deltaX * 0.005;
+            }
+        });
+
+        document.addEventListener('mouseup', function () {
+            capture = false;
+        });
+
+        document.addEventListener('wheel', function (event) {
+            distance += event.deltaY * 0.005;
+        });
+
+        // Управляем движением модели
+        document.addEventListener('keydown', function(event) {
+            switch(event.keyIdentifier) {
+                case 'U+0020':
+                    moving = !moving;
+                    break;
+                default: break;
+            }
+        });
+    }());
+
+    var uP = mat4.create(), distance = 30, orbitX = 0, orbitY = 0;
+
+    // Создаем матрицу перспективной проекции
+    mat4.perspective(uP, 45 / 180 * Math.PI, 
+        window.innerWidth / window.innerHeight, 0.01, 500.0);
 
     (function animate(time) {
 
         // Считаем разницу между временем последней отрисовки и настоящим моментом
         var delta = time - (animate.timeOld || time);
 
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);// TODO
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        // Экспортируем перспективную матрицу
         gl.uniformMatrix4fv(program.uP, false, uP);
+
+        // Создаем и экспортируем матрицу вида
+        uV = mat4.create();
+        mat4.identity(uV);
+        mat4.rotate(uV, uV, orbitX, [1.0, 0.0, 0.0]);
+        mat4.rotate(uV, uV, orbitY, [0.0, 1.0, 0.0]);
+        mat4.translate(uV, uV, [0, 0, -distance]);
+        gl.uniformMatrix4fv(program.uV, false, uV);
+
+        // Настраиваем источник освещение (в координатах модели)
+        gl.uniform3f(program.uLightPos, 0, -10, distance);
 
         mesh.draw();
         

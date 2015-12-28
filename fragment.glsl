@@ -1,8 +1,9 @@
 precision highp float;
 
-uniform mat4 uP, uM;
 uniform mat3 uN;
+uniform mat4 uM, uV;
 uniform sampler2D uSample[4];
+uniform vec3 uLightPos;
 
 varying float vSample;
 varying vec2 vTexture;
@@ -38,28 +39,29 @@ void main() {
   vec3 lDiffuse = vec3(0.3, 0.3, 1.0);
   vec3 lSpecular= vec3(1.0, 1.0, 1.0);
 
-  vec3 plPos = vec3(0.0, 16.0, 48.0);
-  vec3 plDir = normalize(plPos - vVertex);
+  // Направление света вычисляется в координатах камеры
+  vec3 plDir = normalize(vec3(uV * uM * vec4(uLightPos, 1.0)) 
+      - vec3(uV * uM * vec4(vVertex, 1.0)));
 
   vec3 n = normalize(uN * vNormal);
-  vec3 l = normalize(vec3(vec4(plDir, 1.0)));
-  vec3 v = normalize(-vec3(vec4(vVertex, 1.0)));
+  vec3 l = normalize(plDir);
+  vec3 v = normalize(-vVertex);
   vec3 r = reflect(l, n);
 
   vec4 tColor = getColor();
 
   float lambert = dot(l, n),
-        ambientInt = 0.1,
-        specularInt = 0.0,
-        diffuseInt = 0.9,
-        shininess = 1024.0;
+        ambientInt = 2.0,
+        specularInt = 1.0,
+        diffuseInt = 1.0,
+        shininess = 256.0;
 
-  float specular = pow( max( 0.0, dot(r,v) ), shininess );
+  float specular = pow(max(0.0, dot(r,v)), shininess);
 
   gl_FragColor = vec4(
-      tColor.rgb +
-      lAmbient * ambientInt +
+      tColor.rgb *
+      (lAmbient * ambientInt +
       lDiffuse * diffuseInt * lambert +
-      lSpecular * specularInt * specular
+      lSpecular * specularInt * specular)
       , tColor.a);
 }
