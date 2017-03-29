@@ -363,8 +363,8 @@
 
         // Управляем движением модели
         document.addEventListener('keydown', function(event) {
-            switch(event.keyIdentifier) {
-                case 'U+0020':
+            switch(event.code) {
+                case 'Space':
                     moving = !moving;
                     break;
                 default: break;
